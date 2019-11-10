@@ -55,7 +55,7 @@ type t = <
      The name of the file is present if, and only if, [file = true] or
      [file] is missing.
 
-     The positions in the file are expressed horizontal offsets if
+     The positions in the file are expressed as horizontal offsets if
      [offsets = true] or [offsets] is missing (the default), otherwise
      as columns.
 
@@ -117,7 +117,7 @@ val equal : t -> t -> bool
 val lt : t -> t -> bool
 
 (* Given two regions [r1] and [r2], we may want the region [cover r1
-   r2] that covers [r1] and [r2]. We property [equal (cover r1 r2)
+   r2] that covers [r1] and [r2]. We have the property [equal (cover r1 r2)
    (cover r2 r1)]. (In a sense, it is the maximum region, but we avoid
    that name because of the [min] function above.) If [r1] is a ghost,
    the cover is [r2], and if [r2] is a ghost, the cover is [r1]. *)

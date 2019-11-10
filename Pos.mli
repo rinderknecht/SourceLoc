@@ -43,6 +43,10 @@ type t = <
      "\c\r", updates the position [pos] with a new line. *)
 
   new_line : string -> t;
+
+  (* The call [pos#add_nl] assumes that the newline character is one
+     byte. *)
+
   add_nl   : t;
 
   (* The call [pos#shift_bytes n] evaluates in a position that is the
