@@ -23,10 +23,8 @@ type t = <
 
   is_ghost : bool;
 
-  to_string :
-    ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string;
-  compact :
-    ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string;
+  to_string : file:bool -> offsets:bool -> [`Byte | `Point] -> string;
+  compact   : file:bool -> offsets:bool -> [`Byte | `Point] -> string
 >
 
 type pos = t
@@ -100,7 +98,7 @@ let make ~byte ~point_num ~point_bol =
 
     method byte_offset = byte.Lexing.pos_cnum
 
-    method to_string ?(file=true) ?(offsets=true) mode =
+    method to_string ~file ~offsets mode =
       if self#is_ghost then "ghost"
       else
         let offset = self#offset mode in
@@ -114,7 +112,7 @@ let make ~byte ~point_num ~point_bol =
         else sprintf "Line %i, %s %i"
                      self#line horizontal value
 
-    method compact ?(file=true) ?(offsets=true) mode =
+    method compact ~file ~offsets mode =
       if self#is_ghost then "ghost"
       else
         let horizontal =
