@@ -1,0 +1,19 @@
+opam-version : "2.0"
+version      : "1.0"
+maintainer   : "rinderknecht@free.fr"
+authors      : [ "Christian Rinderknecht" ]
+homepage     : "https://github.com/rinderknecht/SourceLoc"
+bug-reports  : "https://github.com/rinderknecht/SourceLoc/issues"
+dev-repo     : "git+https://github.com/rinderknecht/SourceLoc.git"
+license      : "MIT"
+synopsis     : "General-purpose positions and regions within text files"
+depends      : [ "dune" ]
+
+build        : [
+                [ "sh" "-c" "printf 'let version = \"%s\"' \"$(git describe --always --dirty --abbrev=0)\" > Version.ml" ]
+                [ "dune" "build" "-p" name "-j" jobs ]
+               ]
+
+url {
+  src: "https://github.com/rinderknecht/SourceLoc/-/archive/master/SourceLoc.tar.gz"
+}
