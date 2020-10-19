@@ -71,7 +71,7 @@ type t = <
 
   set : file:string -> line:int -> offset:int -> t;
 
-  new_line : string -> t;   (* String must be "\n" or "\c\r" *)
+  new_line : string -> t;   (* String must be "\n" *)
   add_nl   : t;
 
   shift_bytes     : int -> t;
@@ -91,7 +91,7 @@ type t = <
   (* Conversions to [string] *)
 
   to_string : file:bool -> offsets:bool -> [`Byte | `Point] -> string;
-  compact   : file:bool -> offsets:bool -> [`Byte | `Point] -> string
+  compact   : file:bool -> offsets:bool -> [`Byte | `Point] -> string;
 >
 
 (* A shorthand after an [open Pos].  *)
@@ -114,8 +114,12 @@ val ghost : t
 (* Lexing convention: line [1], offset to [0]. *)
 
 val min : file:string -> t
+val max : file:string -> t
 
 (* Comparisons *)
 
-val equal : t -> t -> bool
-val lt    : t -> t -> bool
+val equal  : t -> t -> bool
+val lt     : t -> t -> bool
+val leq    : t -> t -> bool
+val is_min : t -> bool     (* File name irrelevant *)
+val is_max : t -> bool     (* File name irrelevant *)

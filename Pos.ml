@@ -132,7 +132,21 @@ let from_byte byte =
 let ghost = make ~byte:Lexing.dummy_pos ~point_num:(-1) ~point_bol:(-1)
 
 let min ~file =
-  let pos = make ~byte:Lexing.dummy_pos ~point_num:0 ~point_bol:0
+  let position = Lexing.{
+    pos_fname = file;
+    pos_lnum  = 1;
+    pos_bol   = 0;
+    pos_cnum  = 0} in
+  let pos = make ~byte:position ~point_num:0 ~point_bol:0
+  in pos#set_file file
+
+let max ~file =
+  let position = Lexing.{
+    pos_fname = file;
+    pos_lnum  = max_int;
+    pos_bol   = max_int;
+    pos_cnum  = max_int} in
+  let pos = make ~byte:position ~point_num:max_int ~point_bol:max_int
   in pos#set_file file
 
 (* Comparisons *)
@@ -142,3 +156,9 @@ let equal pos1 pos2 =
 
 let lt pos1 pos2 =
   pos1#file = pos2#file && pos1#byte_offset < pos2#byte_offset
+
+let leq pos1 pos2 = lt pos1 pos2 || equal pos1 pos2
+
+let is_min pos = equal (pos#set_file "") (min ~file:"")
+
+let is_max pos = equal (pos#set_file "") (max ~file:"")
