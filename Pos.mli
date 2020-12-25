@@ -118,8 +118,11 @@ val max : file:string -> t
 
 (* Comparisons *)
 
+val compare : t -> t -> int (* Same as [Stdlib.compare] *)
+
 val equal  : t -> t -> bool
 val lt     : t -> t -> bool
 val leq    : t -> t -> bool
+
 val is_min : t -> bool     (* File name irrelevant *)
 val is_max : t -> bool     (* File name irrelevant *)

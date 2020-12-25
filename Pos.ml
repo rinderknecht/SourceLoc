@@ -122,7 +122,7 @@ let make ~byte ~point_num ~point_bol =
           sprintf "%s:%i:%i" self#file self#line horizontal
         else
           sprintf "%i:%i" self#line horizontal
-end
+  end
 
 let from_byte byte =
   let point_num = byte.Lexing.pos_cnum
@@ -158,6 +158,11 @@ let lt pos1 pos2 =
   pos1#file = pos2#file && pos1#byte_offset < pos2#byte_offset
 
 let leq pos1 pos2 = lt pos1 pos2 || equal pos1 pos2
+
+let compare pos1 pos2 =
+  if lt pos1 pos2 then -1
+  else if lt pos2 pos1 then 1
+       else 0
 
 let is_min pos = equal (pos#set_file "") (min ~file:"")
 
