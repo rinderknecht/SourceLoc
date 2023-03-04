@@ -1,5 +1,5 @@
 (library
   (name SourceLoc)
   (public_name SourceLoc)
-  (wrapped true)
+  (libraries yojson)
   (modules Pos Region))

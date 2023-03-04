@@ -16,8 +16,8 @@
    (field [byte]), and we manage code points by means of the fields
    [point_num] and [point_bol]. These two fields have a meaning
    similar to the fields [pos_cnum] and [pos_bol], respectively, from
-   the standard module {! Lexing}. That is to say, [point_num] holds
-   the number of code points since the beginning of the file, and
+   the standard module [Lexing]. That is to say, [point_num] holds the
+   number of code points since the beginning of the file, and
    [point_bol] the number of code points since the beginning of the
    current line.
 
@@ -25,10 +25,11 @@
        line number by the field [line].
 
      * The call [pos#new_line s], where the string [s] is either
-       ["\n"] or ["\c\r"], updates the position [pos] with a new line.
+       ["\n"] or ["\c\r"], updates the position [pos] with a new
+       line.
 
-     * The call [pos#add_nl] assumes that the newline character is one
-       byte.
+     * The call [pos#add_nl] assumes that the newline character is
+       one byte.
 
      * The call [pos#shift_bytes n] evaluates in a position that is
        the translation of position [pos] of [n] bytes forward in the
@@ -39,10 +40,10 @@
        point.
 
      * The call [pos#offset `Byte] provides the horizontal offset of
-       the position [pos] in bytes. (An offset is the number of units,
-       like bytes, since the beginning of the current line.)  The call
-       [pos#offset `Point] is the offset counted in number of unicode
-       points.
+       the position [pos] in bytes. (An offset is the number of
+       units, like bytes, since the beginning of the current line.)
+       The call [pos#offset `Point] is the offset counted in number
+       of unicode points.
 
      * The calls to the method [column] are similar to those to
        [offset], except that they give the curren column number.
@@ -52,7 +53,8 @@
        `Point] counts the same offset in code points.
 
      * The call [pos#byte_offset] is the offset of the position
-       [pos] since the begininng of the file, counted in bytes. *)
+       [pos] since the begininng of the file, counted in bytes.
+ *)
 
 type t = <
   (* Payload *)
@@ -71,7 +73,9 @@ type t = <
 
   set : file:string -> line:int -> offset:int -> t;
 
-  new_line : string -> t;   (* String must be "\n" *)
+  reset_cnum : t;
+
+  new_line : string -> t;   (* String must be "\n" or "\c\r" *)
   add_nl   : t;
 
   shift_bytes     : int -> t;
@@ -90,22 +94,24 @@ type t = <
 
   (* Conversions to [string] *)
 
-  to_string : file:bool -> offsets:bool -> [`Byte | `Point] -> string;
-  compact   : file:bool -> offsets:bool -> [`Byte | `Point] -> string;
+  to_string :
+    ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string;
+  compact :
+    ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string;
 >
 
-(* A shorthand after an [open Pos].  *)
+(* A shorthand after an [open Pos]. *)
 
 type pos = t
 
-(* Constructors *)
+(* CONSTRUCTORS *)
 
 val make :
   byte:Lexing.position -> point_num:int -> point_bol:int -> t
 
 val from_byte : Lexing.position -> t
 
-(* Special positions *)
+(* SPECIAL POSITIONS *)
 
 (* The value [ghost] based on the same as [Lexing.dummy_pos]. *)
 
@@ -114,15 +120,14 @@ val ghost : t
 (* Lexing convention: line [1], offset to [0]. *)
 
 val min : file:string -> t
-val max : file:string -> t
 
-(* Comparisons *)
+(* COMPARISONS *)
 
-val compare : t -> t -> int (* Same as [Stdlib.compare] *)
+val equal : t -> t -> bool
+val lt    : t -> t -> bool
 
-val equal  : t -> t -> bool
-val lt     : t -> t -> bool
-val leq    : t -> t -> bool
+(* CONVERSIONS *)
 
-val is_min : t -> bool     (* File name irrelevant *)
-val is_max : t -> bool     (* File name irrelevant *)
+val to_json       : t -> Yojson.Safe.t
+val of_json       : Yojson.Safe.t -> (t,string) result
+val to_human_json : t -> Yojson.Safe.t

@@ -38,15 +38,23 @@ type region = t
 
 (* A convenience *)
 
-type 'a reg = {region: t; value: 'a}
+type 'a reg = {region : t; value : 'a}
 
 (* Injections *)
 
-exception Invalid
+exception Different_files of string * string
+exception Out_of_order_pos of string * string
 
-let make ~(start: Pos.t) ~(stop: Pos.t) =
-  if start#file <> stop#file || start#byte_offset > stop#byte_offset
-  then raise Invalid
+let make ~(start : Pos.t) ~(stop : Pos.t) =
+  if start#file <> stop#file
+  then raise (Different_files (start#file, stop#file))
+  else
+  if start#line > stop#line
+   || start#line = stop#line && start#byte_offset > stop#byte_offset
+  then
+    let pos1 = start#compact `Point
+    and pos2 = stop#compact ` Point
+    in raise (Out_of_order_pos (pos1, pos2))
   else
     object
       val    start = start
@@ -57,23 +65,23 @@ let make ~(start: Pos.t) ~(stop: Pos.t) =
       method shift_bytes len =
         let start = start#shift_bytes len
         and stop  = stop#shift_bytes len
-        in {< start = start; stop = stop >}
+        in {< start; stop >}
 
       method shift_one_uchar len =
         let start = start#shift_one_uchar len
         and stop  = stop#shift_one_uchar len
-        in {< start = start; stop = stop >}
+        in {< start; stop >}
 
       method set_file name =
         let start = start#set_file name
         and stop  = stop#set_file name
-        in {< start = start; stop = stop >}
+        in {< start; stop >}
 
       (* Getters *)
 
-      method file      = start#file
-      method pos       = start, stop
-      method byte_pos  = start#byte, stop#byte
+      method file     = start#file
+      method pos      = start, stop
+      method byte_pos = start#byte, stop#byte
 
       (* Predicates *)
 
@@ -88,31 +96,44 @@ let make ~(start: Pos.t) ~(stop: Pos.t) =
         and stop_offset =
           if offsets then stop#offset mode else stop#column mode in
         let info =
-          if   file
-          then sprintf "in file \"%s\", line %i, %s"
+          if file
+          then sprintf "File %S, line %i, %s"
                  (String.escaped start#file) start#line horizontal
-          else sprintf "at line %i, %s" start#line horizontal
-        in if   stop#line = start#line
-           then sprintf "%ss %i-%i" info start_offset stop_offset
+          else sprintf "Line %i, %s" start#line horizontal
+        in if stop#line = start#line
+           then
+             if start_offset = stop_offset
+             then sprintf "%s %i" info start_offset
+             else sprintf "%ss %i-%i" info start_offset stop_offset
            else sprintf "%s %i to line %i, %s %i"
-                  info start_offset stop#line horizontal stop_offset
+                        info start_offset stop#line horizontal
+                        stop_offset
 
       method compact ?(file=true) ?(offsets=true) mode =
         if start#is_ghost || stop#is_ghost then "ghost"
         else
-          let prefix    = if file then start#file ^ ":" else ""
+          let file_opt  =
+            if file then Filename.basename start#file ^ ":" else ""
           and start_str = start#compact ~file:false ~offsets mode
           and stop_str  = stop#compact ~file:false ~offsets mode in
-          if start#file = stop#file then
+          if String.equal start#file stop#file then
             if start#line = stop#line then
-              sprintf "%s%s-%i" prefix start_str
-                      (if offsets then stop#offset mode
-                       else stop#column mode)
-            else
-              sprintf "%s%s-%s" prefix start_str stop_str
+              sprintf "%s%s-%i"
+                      file_opt start_str
+                      (if offsets then stop#offset mode else stop#column mode)
+            else sprintf "%s%s-%s" file_opt start_str stop_str
           else sprintf "%s:%s-%s:%s"
                        start#file start_str stop#file stop_str
     end
+
+let empty pos = make ~start:pos ~stop:pos
+
+(* Making a region from the matched prefix of a lexing buffer *)
+
+let from_lexbuf lexbuf =
+  let start = Lexing.lexeme_start_p lexbuf |> Pos.from_byte
+  and stop  = Lexing.lexeme_end_p lexbuf   |> Pos.from_byte
+  in make ~start ~stop
 
 (* Special regions *)
 
@@ -124,17 +145,25 @@ let min ~file = make ~start:(Pos.min ~file) ~stop:(Pos.min ~file)
 
 (* Comparisons *)
 
-let equal r1 r2 =
-   r1#file = r2#file
+let equal (r1 : t) (r2 : t) =
+  String.equal r1#file r2#file
 && Pos.equal r1#start r2#start
 && Pos.equal r1#stop  r2#stop
 
+let reg_equal eq {region=r1;value=v1} {region=r2;value=v2} =
+  equal r1 r2 && eq v1 v2
+
 let lt r1 r2 =
-  r1#file = r2#file
+  String.equal r1#file r2#file
 && not r1#is_ghost
 && not r2#is_ghost
 && Pos.lt r1#start r2#start
 && Pos.lt r1#stop  r2#stop
+
+let compare r1 r2 =
+  if equal r1 r2 then 0
+  else if lt r1 r2 then -1
+  else 1
 
 let cover r1 r2 =
   if r1#is_ghost
@@ -144,3 +173,19 @@ let cover r1 r2 =
        else if   lt r1 r2
             then make ~start:r1#start ~stop:r2#stop
             else make ~start:r2#start ~stop:r1#stop
+
+let to_json f =
+  `Assoc [("start", Pos.to_json f#start);
+          ("stop",  Pos.to_json f#stop)]
+
+let to_human_json f =
+  `Assoc [("start", Pos.to_human_json f#start);
+          ("stop",  Pos.to_human_json f#stop)]
+
+let of_json = fun t ->
+  match t with
+    `Assoc [("start", start); ("stop", stop)] ->
+      (match Pos.of_json start, Pos.of_json stop with
+         Ok start, Ok stop -> Ok (make ~start ~stop)
+       | (Error _ as e), _ | _, (Error _ as e) -> e)
+  | _ -> Error "{start: Pos.t, stop: Pos.t}"
