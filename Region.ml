@@ -174,18 +174,17 @@ let cover r1 r2 =
             then make ~start:r1#start ~stop:r2#stop
             else make ~start:r2#start ~stop:r1#stop
 
-let to_json f =
+let to_json f : Yojson.Safe.t =
   `Assoc [("start", Pos.to_json f#start);
           ("stop",  Pos.to_json f#stop)]
 
-let to_human_json f =
+let to_human_json f : Yojson.Safe.t =
   `Assoc [("start", Pos.to_human_json f#start);
           ("stop",  Pos.to_human_json f#stop)]
 
-let of_json = fun t ->
-  match t with
-    `Assoc [("start", start); ("stop", stop)] ->
-      (match Pos.of_json start, Pos.of_json stop with
-         Ok start, Ok stop -> Ok (make ~start ~stop)
-       | (Error _ as e), _ | _, (Error _ as e) -> e)
+let of_json : Yojson.Safe.t -> (t, string) Result.t = function
+  `Assoc [("start", start); ("stop", stop)] -> (
+     match Pos.of_json start, Pos.of_json stop with
+       Ok start, Ok stop -> Ok (make ~start ~stop)
+     | (Error _ as e), _ | _, (Error _ as e) -> e)
   | _ -> Error "{start: Pos.t, stop: Pos.t}"

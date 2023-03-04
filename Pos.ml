@@ -132,7 +132,7 @@ end
 
 (* CONVERSIONS *)
 
-let position_to_json p =
+let position_to_json p : Yojson.Safe.t =
   `Assoc ["pos_fname", `String p.Lexing.pos_fname;
           "pos_lnum",  `Int p.Lexing.pos_lnum;
           "pos_bol",   `Int p.Lexing.pos_bol;
@@ -148,12 +148,12 @@ let position_of_json = function
   | _ -> Error
           "{pos_fname: string, pos_lnum: int, pos_bol: int, pos_cnum: int}"
 
-let to_json x =
+let to_json x : Yojson.Safe.t =
   `Assoc ["byte",      position_to_json x#byte;
           "point_num", `Int x#point_num;
           "point_bol", `Int x#point_bol ]
 
-let to_human_json x =
+let to_human_json x : Yojson.Safe.t =
   `Assoc [("file", `String x#byte.Lexing.pos_fname);
           ("line", `Int x#byte.Lexing.pos_lnum);
           ("col",  `Int (x#point_num - x#point_bol))]
