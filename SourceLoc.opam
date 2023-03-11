@@ -1,13 +1,13 @@
 opam-version : "2.0"
 name         : "SourceLoc"
 version      : "1.0"
+synopsis     : "General-purpose positions and regions within text files"
 maintainer   : "rinderknecht@free.fr"
 authors      : ["Christian Rinderknecht"]
 homepage     : "https://github.com/rinderknecht/SourceLoc"
 bug-reports  : "https://github.com/rinderknecht/SourceLoc/issues"
 dev-repo     : "git+https://github.com/rinderknecht/SourceLoc.git"
 license      : "MIT"
-synopsis     : "General-purpose positions and regions within text files"
 depends      : ["dune" "yojson"]
 build        : [["dune" "build" "-p" name]]
 
