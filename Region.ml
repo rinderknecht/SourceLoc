@@ -40,6 +40,8 @@ type region = t
 
 type 'a reg = {region : t; value : 'a}
 
+let mk_reg region value = {region; value}
+
 (* Injections *)
 
 exception Different_files of string * string

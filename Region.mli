@@ -90,6 +90,8 @@ and region = t
 
 and 'a reg = {region: t; value: 'a}
 
+val mk_reg : t -> 'a -> 'a reg
+
 (* Making a region from the matched prefix of a lexing buffer *)
 
 val from_lexbuf : Lexing.lexbuf -> t
